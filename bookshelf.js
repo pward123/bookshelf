@@ -147,15 +147,12 @@ define(function(require, exports) {
 
             if (relatedData && relatedData.isJoined()) {
               resp = relatedData.formatPivot(response);
+              model.pivot = resp.__pivot;
             }
 
             // Todo: {silent: true, parse: true}, for parity with collection#set
             // need to check on Backbone's status there, ticket #2636
             model.set(model.parse(response[0]), {silent: true})._reset();
-
-            if (relatedData && relatedData.isJoined()) {
-              relatedData.parsePivot([model]);
-            }
 
             if (!options.withRelated) return response;
             return new EagerRelation([model], response, model)
@@ -533,8 +530,6 @@ define(function(require, exports) {
             // Group the pivot values in the response, so we don't create more models than we need to.
             if (relatedData && relatedData.isJoined()) resp = relatedData.formatPivot(response);
             collection.set(resp, {silent: true, parse: true}).invoke('_reset');
-            if (relatedData && relatedData.isJoined()) relatedData.parsePivot(collection.models);
-
           } else {
             collection.reset([], {silent: true});
             return [];
@@ -1222,13 +1217,8 @@ define(function(require, exports) {
     // Groups the related response according to the type of relationship
     // we're handling, for easy attachment to the parent models.
     eagerPair: function(relationName, related, models) {
-
-      // If this is a `through` or `belongsToMany` relation, we need to cleanup & setup the `interim` model.
-      if (this.isJoined()) related = this.parsePivot(related);
-
       var grouped = _.groupBy(related, function(model) {
-        return this.isSingle() ? model.id : (model.pivot ?
-          model.pivot.get(this.key('foreignKey')) : model.get(this.key('foreignKey')));
+        return this.isSingle() ? model.id : (model.pivot ? model.pivot.foreignKey() : model.get(this.key('foreignKey')));
       }, this);
 
       for (var i = 0, l = models.length; i < l; i++) {
@@ -1242,6 +1232,7 @@ define(function(require, exports) {
     // Formats a `pivot` based on the `idAttribute` of the `target` model
     formatPivot: function(response) {
       var relatedData = this;
+      var Through     = this.throughTarget;
       return _.map(_.groupBy(response, function(row) {
         return row[relatedData.key('foreignKey')];
       }), function(grouped) {
@@ -1249,38 +1240,15 @@ define(function(require, exports) {
         for (key in grouped[0]) {
           if (key.indexOf('_pivot_') !== 0) data[key] = grouped[0][key];
         }
-        data.__pivot = _.map(grouped, function(item) {
+        data.__pivot = new Pivot(Through).set(_.map(grouped, function(item) {
           var key, pivot = {};
           for (key in item) {
             if (key.indexOf('_pivot_') === 0) pivot[key.slice(7)] = item[key];
           }
           return pivot;
-        });
+        }));
         return data;
       });
-    },
-
-    // The `models` is an array of models returned from the fetch,
-    // after they're `set`... parsing out any of the `_pivot_` items from the
-    // join table and assigning them on the pivot model or object as appropriate.
-    parsePivot: function(models) {
-      var Through = this.throughTarget;
-      return _.map(models, function(model) {
-        var data = {}, through;
-        through = Through ? new Through() : new Model();
-        for (var key in attrs) {
-          if (key.indexOf('_pivot_') === 0) {
-            data[key.slice(7)] = attrs[key];
-            delete attrs[key];
-          }
-        }
-        if (!_.isEmpty(data)) {
-          model.pivot = through ? through.set(data, {silent: true}) : new Model(data, {
-            tableName: this.joinTable()
-          });
-        }
-        return model;
-      }, this);
     },
 
     // A few predicates to help clarify some of the logic above.
@@ -1307,6 +1275,43 @@ define(function(require, exports) {
       this.pivotColumns || (this.pivotColumns = []);
       push.apply(this.pivotColumns, columns);
     }
+  };
+
+  // Handler for a `Pivot` relation.
+  var Pivot = function(Target) {
+    this.target = Target ? new Target() : new Model();
+  };
+
+  Pivot.prototype = {
+
+    save: function() {
+
+    },
+
+    // Fetches the data associated with the pivot.
+    fetch: function() {
+
+    },
+
+    // Detaches the pivot model from the current model
+    // it's joined to, but doesn't
+    detach: function() {
+
+    },
+
+    toJSON: function() {
+
+    },
+
+    // Helper method that gets the `pivotKey`.
+    foreignKey: function() {
+      var key = this.relatedData.key('foreignKey');
+      if (this.target instanceof Collection) {
+        return this.target.at(0).get(key);
+      }
+      return this.target.get(key);
+    }
+
   };
 
   // Helper functions

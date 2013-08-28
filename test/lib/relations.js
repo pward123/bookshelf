@@ -330,7 +330,6 @@ module.exports = function(Bookshelf, handler) {
 
       it('eager loads belongsToMany `through`', function(ok) {
         new Doctors().fetch({withRelated: 'patients'}).then(function(collection) {
-          debugger;
           handler(this, ok)(collection);
         });
       });
