@@ -2,10 +2,11 @@ var _ = require('underscore');
 var When = require('when');
 
 var drops = [
-  'sites', 'sitesmeta', 'admins',
-  'admins_sites', 'authors', 'authors_posts',
-  'blogs', 'posts', 'tags', 'posts_tags', 'comments',
-  'users', 'roles', 'photos', 'users_roles', 'info'
+  'sites', 'sitesmeta', 'admins', 'doctors',
+  'patients', 'appointments', 'admins_sites',
+  'authors', 'authors_posts', 'blogs', 'posts',
+  'tags', 'posts_tags', 'comments', 'users',
+  'roles', 'photos', 'users_roles', 'info'
 ];
 
 module.exports = function(Bookshelf) {
@@ -18,6 +19,24 @@ module.exports = function(Bookshelf) {
   .then(function() {
 
     return When.all([
+      Schema.createTable('doctors', function(table) {
+        table.increments('id');
+        table.string('doctor_name');
+      }),
+
+      Schema.createTable('patients', function(table) {
+        table.increments('id');
+        table.string('patient_name');
+      }),
+
+      Schema.createTable('appointments', function(table) {
+        table.increments('id');
+        table.integer('doctor_id');
+        table.integer('patient_id');
+        table.dateTime('appointment_time');
+        table.string('description');
+      }),
+
       Schema.createTable('sites', function(table) {
         table.increments('id');
         table.string('name');

@@ -143,6 +143,11 @@ define(function(require, exports) {
         .first()
         .then(function(response) {
           if (response && response.length > 0) {
+            var resp = response;
+
+            if (relatedData && relatedData.isJoined()) {
+              resp = relatedData.formatPivot(response);
+            }
 
             // Todo: {silent: true, parse: true}, for parity with collection#set
             // need to check on Backbone's status there, ticket #2636
@@ -523,8 +528,13 @@ define(function(require, exports) {
         .select()
         .then(function(response) {
           if (response && response.length > 0) {
-            collection.set(response, {silent: true, parse: true}).invoke('_reset');
+            var resp = response;
+
+            // Group the pivot values in the response, so we don't create more models than we need to.
+            if (relatedData && relatedData.isJoined()) resp = relatedData.formatPivot(response);
+            collection.set(resp, {silent: true, parse: true}).invoke('_reset');
             if (relatedData && relatedData.isJoined()) relatedData.parsePivot(collection.models);
+
           } else {
             collection.reset([], {silent: true});
             return [];
@@ -734,16 +744,20 @@ define(function(require, exports) {
       return handled
         .sync(_.extend({}, options, {parentResponse: this.parentResponse}))
         .select()
-        .then(function(resp) {
+        .then(function(response) {
+          var resp = response;
+
+          if (relatedData && relatedData.isJoined()) resp = relatedData.formatPivot(response);
+
           var relatedModels = relation.pushModels(relationName, handled, resp);
 
           // If there is a response, fetch additional nested eager relations, if any.
           if (resp.length > 0 && options.withRelated) {
             return new EagerRelation(relatedModels, resp, relatedData.createModel())
               .fetch(options)
-              .then(function() { return resp; });
+              .then(function() { return response; });
           }
-          return resp;
+          return response;
         });
     },
 
@@ -925,7 +939,7 @@ define(function(require, exports) {
     },
 
     // Helper for handling either the `attach` or `detach` call on
-    // the `belongsToMany` or `hasOne` / `hasMany` :through relationship.
+    // the `belongsToMany` or `through` relationship.
     _handler: function(method, ids, options) {
       var pending = [];
       if (ids == void 0) {
@@ -1225,14 +1239,35 @@ define(function(require, exports) {
       return related;
     },
 
+    // Formats a `pivot` based on the `idAttribute` of the `target` model
+    formatPivot: function(response) {
+      var relatedData = this;
+      return _.map(_.groupBy(response, function(row) {
+        return row[relatedData.key('foreignKey')];
+      }), function(grouped) {
+        var key, data = {};
+        for (key in grouped[0]) {
+          if (key.indexOf('_pivot_') !== 0) data[key] = grouped[0][key];
+        }
+        data.__pivot = _.map(grouped, function(item) {
+          var key, pivot = {};
+          for (key in item) {
+            if (key.indexOf('_pivot_') === 0) pivot[key.slice(7)] = item[key];
+          }
+          return pivot;
+        });
+        return data;
+      });
+    },
+
     // The `models` is an array of models returned from the fetch,
     // after they're `set`... parsing out any of the `_pivot_` items from the
     // join table and assigning them on the pivot model or object as appropriate.
     parsePivot: function(models) {
       var Through = this.throughTarget;
       return _.map(models, function(model) {
-        var data = {}, attrs = model.attributes, through;
-        if (Through) through = new Through();
+        var data = {}, through;
+        through = Through ? new Through() : new Model();
         for (var key in attrs) {
           if (key.indexOf('_pivot_') === 0) {
             data[key.slice(7)] = attrs[key];

@@ -21,6 +21,9 @@ module.exports = function(Bookshelf, handler) {
   var User     = Models.User;
   var Role     = Models.Role;
   var Photo    = Models.Photo;
+  var Doctor   = Models.Doctor;
+  var Patient  = Models.Patient;
+  var Appointment = Models.Appointment;
 
   // Collections
   var Sites    = Collections.Sites;
@@ -30,6 +33,7 @@ module.exports = function(Bookshelf, handler) {
   var Comments = Collections.Comment;
   var Photos   = Collections.Photos;
   var Authors  = Collections.Authors;
+  var Doctors  = Collections.Doctors;
 
   describe('Bookshelf Relations', function() {
 
@@ -245,6 +249,8 @@ module.exports = function(Bookshelf, handler) {
           });
       });
 
+      it('will use attach to create the appropriate entry on a `through` relation');
+
     });
 
     describe('Custom foreignKey & otherKey', function() {
@@ -323,7 +329,10 @@ module.exports = function(Bookshelf, handler) {
       });
 
       it('eager loads belongsToMany `through`', function(ok) {
-        new Authors().fetch({withRelated: 'blogs'}).then(handler(this, ok), ok);
+        new Doctors().fetch({withRelated: 'patients'}).then(function(collection) {
+          debugger;
+          handler(this, ok)(collection);
+        });
       });
 
     });

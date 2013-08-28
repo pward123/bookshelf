@@ -181,6 +181,38 @@ module.exports = function(Shelf) {
     model: Photo
   });
 
+  var Doctor = Shelf.Model.extend({
+    tableName: 'doctors',
+    patients: function() {
+      return this.belongsToMany(Patient).through(Appointment);
+    }
+  });
+
+  var Doctors = Shelf.Collection.extend({
+    model: Doctor
+  });
+
+  var Patient = Shelf.Model.extend({
+    tableName: 'patients',
+    doctors: function() {
+      return this.belongsToMany(Doctor).through(Appointment);
+    }
+  });
+
+  var Appointment = Shelf.Model.extend({
+    tableName: 'appointments',
+    patient: function() {
+      return this.belongsTo(Patient);
+    },
+    doctor: function() {
+      return this.belongsTo(Doctor);
+    }
+  });
+
+  var Appointments = Shelf.Collection.extend({
+    model: Appointment
+  });
+
   return {
     Models: {
       Site: Site,
@@ -194,7 +226,10 @@ module.exports = function(Shelf) {
       User: User,
       Role: Role,
       Photo: Photo,
-      Info: Info
+      Info: Info,
+      Doctor: Doctor,
+      Patient: Patient,
+      Appointment: Appointment
     },
     Collections: {
       Sites: Sites,
@@ -203,7 +238,9 @@ module.exports = function(Shelf) {
       Blogs: Blogs,
       Comments: Comments,
       Photos: Photos,
-      Authors: Authors
+      Authors: Authors,
+      Appointments: Appointments,
+      Doctors: Doctors
     }
   };
 

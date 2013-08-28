@@ -8,6 +8,54 @@ module.exports = function(Bookshelf) {
 
   return When.all([
 
+    Knex('doctors').insert([{
+      id: 1,
+      doctor_name: 'Dr. Diroux'
+    }, {
+      id: 2,
+      doctor_name: 'Dr. Joe'
+    }]),
+
+    Knex('patients').insert([{
+      id: 1,
+      patient_name: 'Healthy Kid'
+    }, {
+      id: 3,
+      patient_name: 'Sick Bob'
+    }]),
+
+    Knex('appointments').insert([{
+      doctor_id: 1,
+      patient_id: 1,
+      appointment_time: new Date(),
+      description: 'Checkup'
+    }, {
+      doctor_id: 2,
+      patient_id: 1,
+      appointment_time: new Date(),
+      description: 'Physical'
+    }, {
+      doctor_id: 1,
+      patient_id: 3,
+      appointment_time: new Date(),
+      description: 'Sick visit'
+    }, {
+      doctor_id: 1,
+      patient_id: 3,
+      appointment_time: new Date(),
+      description: 'Follow up'
+    }, {
+      doctor_id: 1,
+      patient_id: 1,
+      appointment_time: new Date(),
+      description: 'Referral'
+    }, {
+      doctor_id: 2,
+      patient_id: 1,
+      appointment_time: new Date(),
+      description: 'Cough'
+    }]),
+
     Knex('sites').insert([{
       name: 'knexjs.org'
     }, {

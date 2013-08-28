@@ -346,8 +346,7 @@ module.exports = function(Bookshelf, handler) {
         return When.resolve(this.toString()).then(onFulfilled, onRejected);
       };
 
-      user
-        .save({bio: 'Short user bio'}, {patch: true})
+      user.save({bio: 'Short user bio'}, {patch: true})
         .then(function(model) {
           equal(model.id, 1);
           equal(model.get('bio'), 'Short user bio');
