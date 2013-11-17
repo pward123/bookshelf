@@ -89,12 +89,12 @@ define(function(require, exports) {
         return this[keyName] = singularMemo(this.joinTable()) + '_' + this.throughIdAttribute;
       }
       if (keyName === 'foreignKey') {
-        if (this.type === 'morphTo') return this[keyName] = this.morphName + '_id';
+        if (this.type === 'morphTo') return this[keyName] = this.morphName + 'Id';
         if (this.type === 'belongsTo') return this[keyName] = singularMemo(this.targetTableName) + '_' + this.targetIdAttribute;
-        if (this.isMorph()) return this[keyName] = this.morphName + '_id';
+        if (this.isMorph()) return this[keyName] = this.morphName + 'Id';
         return this[keyName] = singularMemo(this.parentTableName) + '_' + this.parentIdAttribute;
       }
-      if (keyName === 'morphKey') return this[keyName] = this.morphName + '_type';
+      if (keyName === 'morphKey') return this[keyName] = this.morphName + 'Type';
       if (keyName === 'morphValue') return this[keyName] = this.parentTableName || this.targetTableName;
     },
 
