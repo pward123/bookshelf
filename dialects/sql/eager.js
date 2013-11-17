@@ -40,7 +40,7 @@ define(function(require, exports) {
     morphToFetch: Promise.method(function(relationName, relatedData, options) {
       var pending = [];
       var groups = _.groupBy(this.parent, function(m) {
-        return m.get(relatedData.morphName + '_type');
+        return m.get(relatedData.morphName + 'Type');
       });
       for (var group in groups) {
         var Target = Helpers.morphCandidate(relatedData.candidates, group);
@@ -48,7 +48,7 @@ define(function(require, exports) {
         pending.push(target
           .query('whereIn',
             _.result(target, 'idAttribute'),
-            _.uniq(_.invoke(groups[group], 'get', relatedData.morphName + '_id'))
+            _.uniq(_.invoke(groups[group], 'get', relatedData.morphName + 'Id'))
           )
           .sync(options)
           .select()
